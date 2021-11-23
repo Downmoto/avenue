@@ -11,8 +11,23 @@
 
 // defines
 
+#define AVENUE_VERSION "0.0.1"
+
 #define CTRL_KEY(k) ((k) & 0x1f)
 #define ABUF_INIT {NULL, 0}
+
+enum editorKey
+{
+    ARROW_LEFT = 1000,
+    ARROW_RIGHT,
+    ARROW_UP,
+    ARROW_DOWN,
+    DEL_KEY,
+    HOME_KEY,
+    END_KEY,
+    PAGE_UP,
+    PAGE_DOWN
+};
 
 // data
 
@@ -26,6 +41,7 @@ struct abuf
 // global struct containing editor state information
 struct editorConfig
 {
+    int cx, cy;
     int rows;
     int cols;
     struct termios orig_termios; // stores orignal terminal flags for restoration
@@ -75,7 +91,7 @@ void enableRawMode()
 }
 
 // blocks for key read and returns read key
-char editorReadKey()
+int editorReadKey()
 {
     int nread;
     char c;
@@ -84,7 +100,79 @@ char editorReadKey()
         if (nread == -1 && errno != EAGAIN)
             die("read");
 
-    return c;
+    if (c == '\x1b')
+    {
+        char seq[3];
+
+        if (read(STDIN_FILENO, &seq[0], 1) != 1)
+            return '\x1b';
+        if (read(STDIN_FILENO, &seq[1], 1) != 1)
+            return '\x1b';
+
+        if (seq[0] == '[')
+        {
+            if (seq[0] >= '0' && seq[1] <= '9')
+            {
+                if (read(STDIN_FILENO, &seq[2], 1) != 1)
+                    return '\x1b';
+                if (seq[2] == '~')
+                {
+                    switch (seq[1])
+                    {
+                    case '1':
+                        return HOME_KEY;
+                    case '3':
+                        return DEL_KEY;
+                    case '4':
+                        return END_KEY;
+                    case '5':
+                        return PAGE_UP;
+                    case '6':
+                        return PAGE_DOWN;
+                    case '7':
+                        return HOME_KEY;
+                    case '8':
+                        return END_KEY;
+                    }
+                }
+            }
+            else
+            {
+                switch (seq[1])
+                {
+                case 'A':
+                    return ARROW_UP;
+                case 'B':
+                    return ARROW_DOWN;
+                case 'C':
+                    return ARROW_RIGHT;
+                case 'D':
+                    return ARROW_LEFT;
+                case 'H':
+                    return HOME_KEY;
+                case 'F':
+                    return END_KEY;
+                }
+            }
+        }
+        else if (seq[0] == 'O')
+        {
+            switch (seq[1])
+            {
+            case 'H':
+                return HOME_KEY;
+            
+            case 'F':
+                return END_KEY;
+            }
+        }
+
+        return '\x1b';
+    }
+    else
+    {
+        return c;
+    }
 }
 
 // assigns cursor position to arguements return 0 on success
@@ -134,12 +222,60 @@ int getWindowsize(int* rows, int* cols)
     }
 }
 
+// constructor for abuf struct
+void abAppend(struct abuf* ab, const char* s, int len)
+{
+    char* new = realloc(ab->b, ab->len + len);
+    
+    if (new == NULL) return;
+    memcpy(&new[ab->len], s, len);
+    ab->b = new;
+    ab->len += len;
+}
+
+// destructor for abuf struct frees dynamic memory
+void abFree(struct abuf *ab)
+{
+    free(ab->b);
+}
+
 // input
+
+void editorMoveCursor(int key)
+{
+    switch (key)
+    {
+    case ARROW_LEFT:
+        if (E.cx != 0)
+        {
+            E.cx--;
+        }
+        break;
+    case ARROW_RIGHT:
+        if (E.cx != E.cols - 1)
+        {
+            E.cx++;
+        }
+        break;
+    case ARROW_UP:
+        if (E.cy != 0)
+        {
+            E.cy--;
+        }
+        break;
+    case ARROW_DOWN:
+        if (E.cy != E.rows - 1)
+        {
+            E.cy++;
+        }
+        break;
+    }
+}
 
 // processes keys looking for special keypresses i.e ctrl + c to exit()
 void editorProcessKeypress()
 {
-    char c = editorReadKey();
+    int c = editorReadKey();
 
     switch (c)
     {
@@ -149,39 +285,88 @@ void editorProcessKeypress()
         exit(0);
         break;
 
-    default:
-        printf("%c\r\n", c);
+    case HOME_KEY:
+        E.cx = 0;
+        break;
+    case END_KEY:
+        E.cx = E.cols - 1;
+        break;
+
+    case PAGE_UP:
+    case PAGE_DOWN:
+        {
+            int times = E.rows;
+            while (times--)
+                editorMoveCursor(c == PAGE_UP ? ARROW_UP : ARROW_DOWN);            
+        }
+        break;
+
+    case ARROW_UP:
+    case ARROW_DOWN:
+    case ARROW_LEFT:
+    case ARROW_RIGHT:
+        editorMoveCursor(c);
         break;
     }
 }
 
 // output
 
-// Draws rows of tildes
-void editorDrawRows()
+// Draws rows of tildes as well as the welcome screen
+void editorDrawRows(struct abuf* ab)
 {
     int y;
     for (y = 0; y < E.rows; y++)
     {
-        write(STDOUT_FILENO, "~", 1);
+        if (y == E.rows / 3)
+        {
+            char welcome[80];
+            int welcomelen = snprintf(welcome, sizeof(welcome),
+                "Avenue editor -- version %s", AVENUE_VERSION);
+            
+            if (welcomelen > E.cols)
+                welcomelen = E.cols;
 
+            int padding = (E.cols - welcomelen) / 2;
+            if (padding)
+            {
+                abAppend(ab, "~", 1);
+                padding--;
+            }
+            while (padding--) 
+                abAppend(ab, " ", 1);
+
+            abAppend(ab, welcome, welcomelen);
+        }
+        else
+        {
+            abAppend(ab, "~", 1);
+        }
+
+        abAppend(ab, "\x1b[K", 3);
         if (y < E.rows - 1)
-            write(STDOUT_FILENO, "\r\n", 2);
+            abAppend(ab, "\r\n", 2);
     }
 }
 
-// writes 4 bytes into stdo
-// BYTE 1: \x1b escape char or 27 in decimal
-// BYTE 2-4: [, 2, and J 
-// escape J takes one argument 2 which indicates that the entire screen should clear
+// refreshes terminal screen and writes append buffer to it before freeing it
 void editorRefreshScreen()
 {
-    write(STDOUT_FILENO, "\x1b[2J", 4);
-    write(STDOUT_FILENO, "\x1b[H", 3);
+    struct abuf ab = ABUF_INIT;
 
-    editorDrawRows();
-    
-    write(STDOUT_FILENO, "\x1b[H", 3);
+    abAppend(&ab, "\x1b[?25l", 6);
+    abAppend(&ab, "\x1b[H", 3);
+
+    editorDrawRows(&ab);
+
+    char buf[32];
+    snprintf(buf, sizeof(buf), "\x1b[%d;%dH", E.cy + 1, E.cx + 1);
+    abAppend(&ab, buf, strlen(buf));
+
+    abAppend(&ab, "\x1b[?25h", 6);
+
+    write(STDOUT_FILENO, ab.b, ab.len);
+    abFree(&ab);
 }
 
 // init
@@ -189,6 +374,9 @@ void editorRefreshScreen()
 // initializes global state struct with rows and cols
 void initEditor()
 {
+    E.cx = 0;
+    E.cy = 0;
+
     if (getWindowsize(&E.rows, &E.cols) == -1) 
         die("getWindowSize");
 }

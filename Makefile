@@ -25,3 +25,6 @@ clean:
 
 run:
 	./bin/avenue
+
+runmem:
+	valgrind ./bin/avenue
