@@ -11,4 +11,6 @@ struct editorConfig
     struct termios orig_termios; // stores orignal terminal flags for restoration
 };
 
+struct editorConfig E;
+
 #endif
