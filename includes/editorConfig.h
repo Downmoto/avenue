@@ -5,9 +5,9 @@
 
 struct editorConfig
 {
-    int cx, cy;
-    int rows;
-    int cols;
+    int cx, cy; // cursor position
+    int rows; // terminal rows
+    int cols; // terminal columns
     struct termios orig_termios; // stores orignal terminal flags for restoration
 };
 
