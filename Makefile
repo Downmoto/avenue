@@ -7,17 +7,17 @@ CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -std=c99
 OUT = bin/$(NAME)
 
-_SRCS = main.c
+_SRCS = main.c terminal.c
 SRCS = $(patsubst %, $(SDIR)/%, $(_SRCS))
 
-_OBJS = main.o
+_OBJS = main.o terminal.o
 OBJS = $(patsubst %, $(ODIR)/%, $(_OBJS))
 
 $(NAME): $(OBJS)
 	$(CC) -g $(OBJS) -o $(OUT)
 
-$(ODIR)/%.o: $(SDIR)/%.c
-	$(CC) $(CFLAGS) $(INC) -c $(SRCS) -o $(OBJS)
+$(ODIR)/%.o: $(SDIR)/%.c 
+	$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 clean:
 	rm $(OBJS) $(OUT)
