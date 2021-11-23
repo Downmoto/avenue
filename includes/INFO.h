@@ -1,0 +1,5 @@
+#define AVENUE_VERSION "0.0.1"
+#define AUTHOR "Arad Fadaei"
+#define REPO "https://github.com/Downmoto/avenue"
+#define ORIGINAL_AUTHOR "antirez"
+#define ORIGINAL_REPO "https://github.com/antirez/kilo"
