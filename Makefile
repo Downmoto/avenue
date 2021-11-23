@@ -7,10 +7,10 @@ CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -std=c99
 OUT = bin/$(NAME)
 
-_SRCS = main.c terminal.c
+_SRCS = main.c terminal.c abuf.c editor.c
 SRCS = $(patsubst %, $(SDIR)/%, $(_SRCS))
 
-_OBJS = main.o terminal.o
+_OBJS = main.o terminal.o abuf.o editor.o
 OBJS = $(patsubst %, $(ODIR)/%, $(_OBJS))
 
 $(NAME): $(OBJS)
