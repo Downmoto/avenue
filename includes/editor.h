@@ -1,8 +1,14 @@
 #ifndef EDITOR_H_
 #define EDOTOR_H_
 
+#define _DEFAULT_SOURCE
+#define _BSD_SOURCE
+#define _GNU_SOURCE
+
 #include <unistd.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <stdio.h>
 
 #include "INFO.h"
 #include "editorKeys.h"
@@ -26,6 +32,12 @@ void editorDrawRows(struct abuf *ab);
 
 // refreshes terminal screen and writes append buffer to it before freeing it
 void editorRefreshScreen();
+
+// TODO: Document function
+void editorAppendRow(char* s, size_t len);
+
+// TODO: Document function
+void editorOpen(char* filename);
 
 // initialise editor with windowsize and cursor position
 void initEditor();

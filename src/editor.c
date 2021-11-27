@@ -1,4 +1,5 @@
 #include "editor.h"
+// TODO: Document file
 
 void editorMoveCursor(int key)
 {
@@ -164,29 +165,40 @@ void editorDrawRows(struct abuf *ab)
     int y;
     for (y = 0; y < E.rows; y++)
     {
-        if (y == E.rows / 3)
+        if (y >= E.numrows)
         {
-            char welcome[80];
-            int welcomelen = snprintf(welcome, sizeof(welcome),
-                "Avenue editor -- version %s", AVENUE_VERSION);
+            if (E.numrows == 0 && y == E.rows / 3)
+            {
+                char welcome[80];
+                int welcomelen = snprintf(welcome, sizeof(welcome),
+                    "avenue editor -- version %s", AVENUE_VERSION);
 
-            if (welcomelen > E.cols)
-                welcomelen = E.cols;
+                if (welcomelen > E.cols)
+                    welcomelen = E.cols;
 
-            int padding = (E.cols - welcomelen) / 2;
-            if (padding)
+                int padding = (E.cols - welcomelen) / 2;
+                if (padding)
+                {
+                    abAppend(ab, "~", 1);
+                    padding--;
+                }
+                while (padding--)
+                    abAppend(ab, " ", 1);
+
+                abAppend(ab, welcome, welcomelen);
+            }
+            else
             {
                 abAppend(ab, "~", 1);
-                padding--;
             }
-            while (padding--)
-                abAppend(ab, " ", 1);
-
-            abAppend(ab, welcome, welcomelen);
         }
         else
         {
-            abAppend(ab, "~", 1);
+            int len = E.row[y].size;
+            if (len > E.cols)
+                len = E.cols;
+
+            abAppend(ab, E.row[y].chars, len);
         }
 
         abAppend(ab, "\x1b[K", 3);
@@ -214,12 +226,48 @@ void editorRefreshScreen()
     abFree(&ab);
 }
 
+void editorAppendRow(char* s, size_t len)
+{
+    E.row = realloc(E.row, sizeof(erow) * (E.numrows + 1));
+
+    int at = E.numrows;
+    E.row[at].size = len;
+    E.row[at].chars = malloc(len + 1);
+    memcpy(E.row[at].chars, s, len);
+    E.row[at].chars[len] = '\0';
+    E.numrows++;
+}
+
+void editorOpen(char* filename)
+{
+    FILE* fp = fopen(filename, "r");
+    if (!fp) 
+        die("fopen");
+
+    char* line = NULL;
+    size_t linecap = 0;
+    ssize_t linelen;
+
+    while ((linelen = getline(&line, &linecap, fp)) != -1)
+    {
+        while (linelen > 0 && (line[linelen - 1] == '\n' ||
+                               line[linelen - 1] == '\r'))
+            linelen--;
+
+        editorAppendRow(line, linelen);
+    }
+    free(line);
+    fclose(fp);
+}
+
 void initEditor()
 {
     enableRawMode();
 
     E.cx = 0;
     E.cy = 0;
+    E.numrows = 0;
+    E.row = NULL;
 
     if (getWindowsize(&E.rows, &E.cols) == -1)
         die("getWindowSize");
