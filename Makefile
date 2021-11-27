@@ -6,6 +6,7 @@ INC = -Iincludes
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -std=c99
 OUT = bin/$(NAME)
+ARGS = testfile.txt
 
 _SRCS = main.c terminal.c abuf.c editor.c
 SRCS = $(patsubst %, $(SDIR)/%, $(_SRCS))
@@ -24,7 +25,7 @@ clean:
 	clear
 
 run:
-	./bin/avenue
+	./bin/avenue $(ARGS)
 
 runmem:
-	valgrind ./bin/avenue
+	valgrind ./bin/avenue $(ARGS)
