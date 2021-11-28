@@ -17,6 +17,7 @@
 #include "terminal.h"
 
 #define CTRL_KEY(k) ((k)&0x1f)
+#define TAB_STOP 8
 
 // moves cursor based on arrow key press
 void editorMoveCursor(int key);
@@ -27,11 +28,20 @@ int editorReadKey();
 // processes keys looking for special keypresses i.e ctrl + c to exit()
 void editorProcessKeypress();
 
+// TODO: Document function
+void editorScroll();
+
 // Draws rows of tildes as well as the welcome screen
 void editorDrawRows(struct abuf *ab);
 
 // refreshes terminal screen and writes append buffer to it before freeing it
 void editorRefreshScreen();
+
+// TODO: Document function
+int editorRowCxToRx(erow *row, int cx);
+
+// TODO: Document function
+void editorUpdateRow(erow *row);
 
 // TODO: Document function
 void editorAppendRow(char* s, size_t len);

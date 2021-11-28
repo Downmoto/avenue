@@ -6,7 +6,10 @@
 
 struct editorConfig
 {
-    int cx, cy; // cursor position
+    int cx, cy; // cursor position 
+    int rx;
+    int rowoff;
+    int coloff;
     int rows; // terminal rows
     int cols; // terminal columns
     int numrows;
