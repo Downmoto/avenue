@@ -4,7 +4,7 @@ SDIR = src
 ODIR = build
 INC = -Iincludes
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c99
+CFLAGS = -Wall -Wextra -pedantic -std=c99 -g
 OUT = bin/$(NAME)
 ARGS = testfile.txt
 
@@ -28,4 +28,4 @@ run:
 	./bin/avenue $(ARGS)
 
 runmem:
-	valgrind ./bin/avenue $(ARGS)
+	valgrind --leak-check=full --show-leak-kinds=all ./bin/avenue $(ARGS)
