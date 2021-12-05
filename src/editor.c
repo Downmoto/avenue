@@ -308,17 +308,18 @@ void editorUpdateRow(erow *row)
 
 void editorAppendRow(char* s, size_t len)
 {
+    // reallocate memory for new row
     E.row = realloc(E.row, sizeof(erow) * (E.numrows + 1));
 
-    int at = E.numrows;
+    int at = E.numrows; // fresh index
     E.row[at].size = len;
-    E.row[at].chars = malloc(len + 1);
-    memcpy(E.row[at].chars, s, len);
-    E.row[at].chars[len] = '\0';
+    E.row[at].chars = malloc(len + 1); // allocate +1 for null term byte
+    memcpy(E.row[at].chars, s, len); // copy string to new row
+    E.row[at].chars[len] = '\0'; // append null term byte
 
-    E.row[at].rsize = 0;
-    E.row[at].render = NULL;
-    editorUpdateRow(&E.row[at]);
+    E.row[at].rsize = 0; // initialize render size before calcualting tabs
+    E.row[at].render = NULL; // ^
+    editorUpdateRow(&E.row[at]); // update row with correct render
 
     E.numrows++;
 }
@@ -349,6 +350,7 @@ void initEditor()
 {
     enableRawMode();
 
+    // initialize editorConfig values
     E.cx = 0;
     E.cy = 0;
     E.rx = 0;

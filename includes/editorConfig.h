@@ -8,12 +8,12 @@ struct editorConfig
 {
     int cx, cy; // cursor position 
     int rx;
-    int rowoff;
-    int coloff;
+    int rowoff; // row offset
+    int coloff; // column offset
     int rows; // terminal rows
     int cols; // terminal columns
-    int numrows;
-    erow *row;
+    int numrows; // number of rows
+    erow *row; // array of erows
     struct termios orig_termios; // stores orignal terminal flags for restoration
 };
 

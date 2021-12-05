@@ -43,10 +43,10 @@ int editorRowCxToRx(erow *row, int cx);
 // TODO: Document function
 void editorUpdateRow(erow *row);
 
-// TODO: Document function
+// allocate memory and append new row to editorConfig erow array
 void editorAppendRow(char* s, size_t len);
 
-// TODO: Document function
+// open and read into editorConfig individual rows
 void editorOpen(char* filename);
 
 // initialise editor with windowsize and cursor position
